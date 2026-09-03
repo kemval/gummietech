@@ -1,0 +1,85 @@
+# Tier 1 — primary sources (where news is born)
+#
+# Re-verify after editing:  python src/verify_feeds.py -v
+# Re-run monthly. Publishers move these without notice.
+
+feeds:
+  # --- research institutions ---
+  - name: MIT News
+    url: https://news.mit.edu/rss/feed
+    topic: general
+
+  - name: NASA Breaking News
+    url: https://www.nasa.gov/rss/dyn/breaking_news.rss
+    topic: space
+
+  # JPL's own feed is gone; NASA now hosts center feeds on nasa.gov
+  - name: NASA JPL
+    url: https://www.nasa.gov/centers-and-facilities/jpl/feed/
+    topic: space
+
+  - name: NASA News Releases
+    url: https://www.nasa.gov/news-release/feed/
+    topic: space
+
+  - name: NASA Technology
+    url: https://www.nasa.gov/technology/feed/
+    topic: tech
+
+  - name: Berkeley Lab
+    url: https://newscenter.lbl.gov/feed/
+    topic: general
+
+  # was mpg.de/rss/all (404) — English research feed
+  - name: Max Planck Society
+    url: https://www.mpg.de/en/research.rss
+    topic: general
+
+  # --- company newsrooms ---
+  - name: Google DeepMind
+    url: https://deepmind.google/blog/rss.xml
+    topic: ai
+
+  - name: Hugging Face Blog
+    url: https://huggingface.co/blog/feed.xml
+    topic: ai
+
+  - name: NVIDIA Developer Blog
+    url: https://developer.nvidia.com/blog/feed/
+    topic: ai
+
+  # --- journals / science press ---
+  - name: Nature News
+    url: https://www.nature.com/nature.rss
+    topic: general
+
+  - name: Quanta Magazine
+    url: https://api.quantamagazine.org/feed/
+    topic: general
+
+  - name: Science Daily - Top Tech
+    url: https://www.sciencedaily.com/rss/top/technology.xml
+    topic: tech
+
+  - name: IEEE Spectrum
+    url: https://spectrum.ieee.org/feeds/feed.rss
+    topic: engineering
+
+  - name: Ars Technica
+    url: https://feeds.arstechnica.com/arstechnica/index
+    topic: tech
+
+  - name: Phys.org
+    url: https://phys.org/rss-feed/
+    topic: general
+
+  # --- physics: CERN replacements, UNVERIFIED ---
+  # home.cern/api/news/news/feed.rss now 404s. These are candidates —
+  # keep whichever passes, delete the rest.
+  - name: CERN Courier
+    url: https://cerncourier.com/feed/
+    topic: physics
+
+  - name: Fermilab News
+    url: https://news.fnal.gov/feed/
+    topic: physics

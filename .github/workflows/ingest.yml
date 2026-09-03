@@ -1,0 +1,32 @@
+# Week 2. Disabled until the ingest script exists.
+# Uncomment the schedule block when src/ingest.py is ready.
+
+name: ingest
+
+on:
+  workflow_dispatch:        # manual trigger only, for now
+  # schedule:
+  #   - cron: '0 */2 * * *'   # every 2 hours
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify feeds
+        run: python src/verify_feeds.py
+
+      # - name: Run ingest
+      #   env:
+      #     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      #     GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+      #   run: python src/ingest.py

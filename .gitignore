@@ -1,0 +1,19 @@
+# secrets — never commit these
+.env
+credentials.json
+service_account.json
+*.pem
+
+# python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# rendered output
+output/
+*.png
+
+# editor
+.vscode/
+.DS_Store
