@@ -1,16 +1,28 @@
-# Week 2. Disabled until the ingest script exists.
-# Uncomment the schedule block when src/ingest.py is ready.
-
 name: ingest
 
+# Layers 1 and 2, every two hours: pull the feeds, then score what's new.
+# Drafting and rendering stay manual — Layer 5 is a human gate.
+#
+# GitHub delays scheduled runs by 10-30 minutes at peak, and disables
+# schedules entirely after 60 days without repo activity. Neither matters
+# for a 2-hour cycle, but nothing here may assume punctual execution.
+
 on:
-  workflow_dispatch:        # manual trigger only, for now
-  # schedule:
-  #   - cron: '0 */2 * * *'   # every 2 hours
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+# A slow run must not overlap the next one: both would write the same
+# feed items to the sheet before either had finished deduping.
+concurrency:
+  group: ingest
+  cancel-in-progress: false
 
 jobs:
   ingest:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,11 +34,22 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Verify feeds
-        run: python src/verify_feeds.py
+      # gspread wants a file, and a secret is a string. Written to the
+      # workspace, which is destroyed with the runner.
+      - name: Write service account credentials
+        env:
+          GOOGLE_SHEETS_CREDENTIALS_JSON: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS_JSON }}
+        run: printf '%s' "$GOOGLE_SHEETS_CREDENTIALS_JSON" > credentials.json
 
-      # - name: Run ingest
-      #   env:
-      #     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      #     GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
-      #   run: python src/ingest.py
+      - name: Ingest feeds
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SHEETS_CREDENTIALS: credentials.json
+        run: python src/ingest.py
+
+      - name: Score new items
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SHEETS_CREDENTIALS: credentials.json
+        run: python src/score.py
