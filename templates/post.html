@@ -1,0 +1,49 @@
+{% extends 'site_base.html' %}
+
+{% block title %}{{ post.hook }} — gummietech{% endblock %}
+{% block description %}{{ post.alt_text }}{% endblock %}
+
+{% block content %}
+  <header class="masthead">
+    <a class="back" href="{{ base }}">← all posts</a>
+  </header>
+
+  <article>
+    <div class="hero panel" style="--accent: var(--{{ post.lead }})">
+      {% if not post.peer_reviewed %}<div class="flag">Preprint — not yet peer-reviewed</div>{% endif %}
+      <div class="meta">
+        {% if post.domain %}{{ post.domain }} · {% endif %}<time datetime="{{ post.published_at }}">{{ post.published_on }}</time>
+      </div>
+      <h1 class="hook">{{ post.hook }}</h1>
+    </div>
+
+    <div class="section">
+      <h2>What happened</h2>
+      <p>{{ post.what_happened }}</p>
+    </div>
+
+    <div class="section">
+      <h2>Why it matters</h2>
+      <p>{{ post.why_it_matters }}</p>
+    </div>
+
+    <div class="section">
+      <h2>The catch</h2>
+      <p>{{ post.the_catch }}</p>
+    </div>
+
+    <dl class="source">
+      <dt>Source</dt>
+      <dd>{{ post.attribution }}</dd>
+      <dd><a href="{{ post.source_url }}">{{ post.source_host }} →</a></dd>
+
+      {% if post.code_url %}
+      <dt>Code</dt>
+      <dd><a href="{{ post.code_href }}">{{ post.code_url }} →</a></dd>
+      {% endif %}
+
+      <dt>Status</dt>
+      <dd>{% if post.peer_reviewed %}Peer-reviewed{% else %}Preprint — not yet peer-reviewed{% endif %}</dd>
+    </dl>
+  </article>
+{% endblock %}

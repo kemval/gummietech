@@ -1,0 +1,25 @@
+{
+  "post_type": "drop",
+  "domain": "materials engineering",
+  "colorway": "ember",
+  "hook": "Bend a diamond thin enough and it makes electricity.",
+  "what_happened": "University of Hong Kong researchers used edge exfoliation to create flexible polycrystalline diamond membranes that generate electricity when bent.",
+  "why_it_matters": "It breaks a century-old assumption that diamond is non-piezoelectric, transforming it from a passive structural support into an active electrical material.",
+  "the_catch": "The voltage comes from boundaries between tiny crystals, not from diamond's own structure — so it needs polycrystalline membranes, and no working device exists yet.",
+  "caption": "Researchers have discovered that bending ultrathin diamond membranes can generate electricity, breaking a century-old scientific assumption.",
+  "keywords": [
+    "diamond",
+    "piezoelectricity",
+    "materials"
+  ],
+  "hashtags": [
+    "#materials",
+    "#engineering",
+    "#physics",
+    "#gummietech"
+  ],
+  "alt_text": "A five-slide carousel explaining how ultrathin diamond membranes can generate electricity when bent.",
+  "source_url": "https://www.sciencedaily.com/releases/2026/08/260829035223.htm",
+  "attribution": "Jing et al., Science Advances (2026)",
+  "peer_reviewed": true
+}

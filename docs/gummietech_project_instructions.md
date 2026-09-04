@@ -48,6 +48,7 @@ When drafting for the automated pipeline, return strict JSON with no prose or co
 ```json
 {
   "post_type": "drop | breakdown | signal",
+  "colorway": "signal | orbit | bloom | ember",
   "hook": "",
   "what_happened": "",
   "why_it_matters": "",
@@ -80,11 +81,11 @@ Sharp, curious, plain-spoken. Explain like a smart friend who actually understan
 
 Derived from the account avatar. Production asset: `templates/drop.html`.
 
-- **Palette:** `--pink #EE6EC0` (primary field), `--olive #B2BC5F` (secondary field), `--cream #F7EFE2` (neutral), `--ink #3B2C23` (outline and type — not black), `--blush #F9A8D4` (accent, sparing).
+- **Palette:** `--pink #EE6EC0`, `--olive #B2BC5F`, `--cream #F7EFE2` (neutral), `--ink #3B2C23` (outline and type — not black), `--blush #F9A8D4`, `--sky #7FB2E5`, `--amber #F2B441`.
 - **Type:** Outfit 800 for display/hooks, Figtree 500/700 for body. Both Google Fonts.
 - **Canvas:** 1080×1350 (4:5).
 - **Signature element:** a 10px `--ink` outline frame, 44px radius, inset 34px — echoes the avatar's illustration style, appears on every slide.
-- Fields alternate pink → cream → olive; slide 4 drops to `--ink`.
+- **Fields rotate by topic, the rhythm does not.** Each post picks a colorway family — `signal` (AI, computing, software), `orbit` (space, astronomy, physics), `bloom` (biology, medicine, climate), `ember` (energy, materials, engineering) — and renders `lead · cream · support · dark · lead`. Slide 2 is always cream, slide 4 always drops to `--ink` with its frame in the post's lead hue, and slides 1 and 5 always match. `COLORWAYS` in `src/render.py` is the source of truth.
 - Build reel cover frames use the Drop hook styling, so both pillars read as one account.
 
 Do not propose a different visual direction without being asked.

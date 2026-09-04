@@ -1,0 +1,67 @@
+name: site
+
+# Builds the web archive (posts/*.json → GitHub Pages) and deploys it.
+# The Instagram bio points here: it is the only place a reader can click
+# through to the source a carousel was built from, because Instagram does
+# not make caption URLs clickable.
+#
+# No secrets — site.py reads the repo and nothing else. Only posts that
+# carry a published_at date are built, so an unapproved draft sitting in
+# posts/ cannot reach the web. Layer 5 stays a human gate.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'posts/**'
+      - 'templates/**'
+      - 'fonts/**'
+      - 'src/site.py'
+      - 'src/render.py'
+      - '.github/workflows/site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deploy that is already publishing; just queue behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      # site.py imports render.py, which imports playwright at module
+      # level, so the package has to be present. `playwright install` is
+      # deliberately NOT run: no browser is launched here, and the
+      # download would add minutes to every build.
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build the site
+        run: python src/site.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -18,8 +18,10 @@ Strategy and source map: `docs/gummietech_content_system.md`
 |---|---|
 | `src/` | Pipeline scripts |
 | `feeds/` | RSS source lists by tier (YAML) |
-| `templates/` | HTML/CSS slide templates |
+| `templates/` | HTML/CSS slide and site templates |
+| `posts/` | Drafted post JSON |
 | `output/` | Rendered PNGs (gitignored) |
+| `site/` | Built web archive (gitignored) |
 | `.github/workflows/` | GitHub Actions cron |
 
 ## Setup
@@ -30,6 +32,23 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env              # then fill in keys
 ```
+
+## Web archive
+
+Instagram does not make caption URLs clickable, so the source of a carousel
+never reaches a reader. The archive is where the bio link points:
+
+<https://kemval.github.io/gummietech/>
+
+```bash
+python src/site.py                # builds site/ from posts/*.json
+```
+
+One page per carousel, built entirely from JSON the drafting step already
+produces — no writing per post. A post appears **only** once it has a
+`published_at` date, which you add by hand when it actually goes live on
+Instagram. Without that gate, `draft.py` would put unreviewed drafts on the
+open web. Pushing to `master` rebuilds and deploys it.
 
 ## Verify feeds
 

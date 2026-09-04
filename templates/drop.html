@@ -29,45 +29,62 @@
   font-display: block;
 }
 
-:root {
-  --pink:   #EE6EC0;
-  --olive:  #B2BC5F;
-  --cream:  #F7EFE2;
-  --ink:    #3B2C23;
-  --blush:  #F9A8D4;
+{% include 'tokens.css' %}
 
-  --field: var(--pink);
-
-  --display: 'Outfit', system-ui, sans-serif;
-  --body:    'Figtree', system-ui, sans-serif;
-}
+/* --lead is the post's topic hue, set on <body> by render.py from the
+   resolved colorway. It is the only colour value that varies per post, and
+   it always comes from the COLORWAYS allowlist in render.py — never
+   straight from the draft JSON. Jinja autoescaping guards HTML, not CSS,
+   so the allowlist is what makes this safe. */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { background: #2A2A2A; font-family: var(--body); }
 
-/* ---------- THE SLIDE ---------- */
+/* ---------- THE SLIDE ----------
+   Colours are addressed by ROLE, not by hue. The hue that fills each slide
+   is chosen per post (see COLORWAYS in render.py) and applied as the
+   modifier class below, so nothing downstream may name a colour directly —
+   do that and the dark slide breaks the moment the palette rotates. */
 .slide {
+  --field:    var(--pink);      /* the flood colour behind everything */
+  --on-field: var(--ink);       /* type and dots */
+  --frame:    var(--on-field);  /* the 10px signature outline */
+  --flag-bg:  var(--ink);
+  --flag-fg:  var(--cream);
+
   width: 1080px; height: 1350px;
   background: var(--field);
-  color: var(--ink);
+  color: var(--on-field);
   position: relative; overflow: hidden;
   padding: 34px;
 }
 
 .frame {
   height: 100%;
-  border: 10px solid var(--ink);
+  border: 10px solid var(--frame);
   border-radius: 44px;
   padding: 68px 62px 60px;
   display: flex; flex-direction: column;
   position: relative;
 }
 
+.slide.pink  { --field: var(--pink);  }
 .slide.olive { --field: var(--olive); }
 .slide.cream { --field: var(--cream); }
-.slide.dark  { --field: var(--ink); color: var(--cream); }
-.slide.dark .frame { border-color: var(--pink); }
+.slide.blush { --field: var(--blush); }
+.slide.sky   { --field: var(--sky);   }
+.slide.amber { --field: var(--amber); }
+
+/* The catch slide. Its frame and preprint flag carry --lead, so the post's
+   topic hue is present even on the one slide that is never a field colour. */
+.slide.dark {
+  --field:    var(--ink);
+  --on-field: var(--cream);
+  --frame:    var(--lead);
+  --flag-bg:  var(--lead);
+  --flag-fg:  var(--ink);
+}
 
 /* ---------- chrome ---------- */
 .domain {
@@ -82,11 +99,9 @@ body { background: #2A2A2A; font-family: var(--body); }
 .dots { position: absolute; right: 62px; bottom: 50px; display: flex; gap: 10px; }
 .dots i {
   width: 13px; height: 13px; border-radius: 50%;
-  border: 3px solid var(--ink); display: block;
+  border: 3px solid var(--on-field); display: block;
 }
-.dots i.on { background: var(--ink); }
-.slide.dark .dots i { border-color: var(--cream); }
-.slide.dark .dots i.on { background: var(--cream); }
+.dots i.on { background: var(--on-field); }
 .spacer { flex: 1; }
 
 /* ---------- hook ----------
@@ -119,11 +134,10 @@ body { background: #2A2A2A; font-family: var(--body); }
 /* ---------- caveat flag ---------- */
 .flag {
   display: inline-block; align-self: flex-start;
-  background: var(--ink); color: var(--cream);
+  background: var(--flag-bg); color: var(--flag-fg);
   font-family: var(--body); font-weight: 700; font-size: 25px;
   padding: 13px 22px; border-radius: 999px; margin-bottom: 34px;
 }
-.slide.dark .flag { background: var(--pink); color: var(--ink); }
 
 /* ---------- final slide ---------- */
 .cta-handle {
@@ -141,10 +155,10 @@ body { background: #2A2A2A; font-family: var(--body); }
 
 </style>
 </head>
-<body>
+<body style="--lead: var(--{{ lead }})">
 
 <!-- 1. HOOK -->
-<div class="slide" id="slide-1"><div class="frame">
+<div class="slide {{ fields[0] }}" id="slide-1"><div class="frame">
   <div class="domain">{{ domain }}</div>
   <div class="hook {{ hook_size }}">{{ hook }}</div>
   <div class="wordmark">@gummietech</div>
@@ -152,7 +166,7 @@ body { background: #2A2A2A; font-family: var(--body); }
 </div></div>
 
 <!-- 2. WHAT HAPPENED -->
-<div class="slide cream" id="slide-2"><div class="frame">
+<div class="slide {{ fields[1] }}" id="slide-2"><div class="frame">
   <div class="slide-title">What happened</div>
   <div class="spacer"></div>
   <div class="slide-body">{{ what_happened }}</div>
@@ -162,7 +176,7 @@ body { background: #2A2A2A; font-family: var(--body); }
 </div></div>
 
 <!-- 3. WHY IT MATTERS -->
-<div class="slide olive" id="slide-3"><div class="frame">
+<div class="slide {{ fields[2] }}" id="slide-3"><div class="frame">
   <div class="slide-title">Why it matters</div>
   <div class="spacer"></div>
   <div class="slide-body">{{ why_it_matters }}</div>
@@ -172,7 +186,7 @@ body { background: #2A2A2A; font-family: var(--body); }
 </div></div>
 
 <!-- 4. THE CATCH -->
-<div class="slide dark" id="slide-4"><div class="frame">
+<div class="slide {{ fields[3] }}" id="slide-4"><div class="frame">
   {% if show_preprint_flag %}<div class="flag">Preprint — not yet peer-reviewed</div>{% endif %}
   <div class="slide-title">The catch</div>
   <div class="spacer"></div>
@@ -183,13 +197,14 @@ body { background: #2A2A2A; font-family: var(--body); }
 </div></div>
 
 <!-- 5. CTA + SOURCE -->
-<div class="slide" id="slide-5"><div class="frame">
+<div class="slide {{ fields[4] }}" id="slide-5"><div class="frame">
   <div class="spacer"></div>
   <div class="cta-handle">Follow<br>@gummietech</div>
   <div class="cta-line">Science, technology and engineering —<br>explained by someone whose code also crashes.</div>
   <div class="source">
     <b>Source</b> — {{ attribution }}<br>
-    {% if code_url %}<b>Code</b> — {{ code_url }}{% endif %}
+    {% if code_url %}<b>Code</b> — {{ code_url }}<br>{% endif %}
+    Full sources → link in bio
   </div>
   <div class="dots"><i></i><i></i><i></i><i></i><i class="on"></i></div>
 </div></div>

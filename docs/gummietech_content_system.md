@@ -148,6 +148,18 @@ The API itself costs nothing. The friction is approval and configuration, not mo
 
 Move to Route B only once the format is proven and the manual scheduling step is genuinely the bottleneck.
 
+### Layer 6b — The archive (the link in bio)
+
+Instagram does not make caption URLs clickable. `source_url` is drafted, rendered into `caption.txt`, and printed on slide 5 as flat text — and then dies there. Nobody can reach the paper.
+
+`src/site.py` builds `posts/*.json` into a static site on GitHub Pages: an index plus one permalink per carousel, showing the same five slide texts as readable HTML with a real link to the source, the code, the attribution, and the preprint label. Slide 5 carries "Full sources → link in bio".
+
+**This is deliberately not a blog.** A blog is a second content product — original long-form writing per post, forever, competing for the 20 minutes/day §8 budgets. The archive costs nothing per post because it is a pure function of the drafting JSON. If the appetite for writing long-form ever appears, that is a separate decision, not an extension of this.
+
+A post reaches the site only when it has a `published_at` date, added by hand when it actually goes live on Instagram. `draft.py` writes into `posts/` *before* approval, so without that gate an unreviewed draft would land on a public permalink — §7.1 applies to the web at least as hard as it applies to the feed.
+
+Secondary benefit: Route B needs media at a publicly accessible URL, and this puts that hosting in place already.
+
 ### Layer 7 — Learn (weekly)
 
 Instagram Insights (native, free) gives saves and shares per post. Log them in a sheet manually. Track **saves and shares**, not likes. After 30 posts, cut the weakest format and double the winner.
@@ -295,6 +307,7 @@ A new Instagram page does not qualify, and this is a credentialing barrier rathe
 | Drafting | Free-tier LLM for routine posts; **this Claude project** for Breakdowns | |
 | Image rendering | **Playwright → PNG** | Free and open source |
 | Fonts / icons | **Google Fonts**, **Lucide** or **Tabler** | Free, self-hostable |
+| Link in bio / archive | **GitHub Pages** | Free and unlimited on public repos; built and deployed by Actions |
 | Image hosting | **GitHub Pages** or **Cloudflare R2 free tier** | Only needed for Graph API path |
 | Design | **Figma free tier**, Canva free (manual only) | |
 | Reels / video | **CapCut free**, **DaVinci Resolve free** | |
@@ -323,13 +336,13 @@ Locked before any automation, because everything downstream depends on it.
 
 - **Canvas:** 1080×1350 (4:5 portrait — maximum feed real estate)
 - **Type:** one display face for hooks, one highly legible sans for body, both from Google Fonts. Hook text must be readable as a thumbnail.
-- **Color:** 2 brand colors + 1 accent + near-black and off-white. Consistency across every post is what makes the grid recognizable.
+- **Color:** a set of field hues that rotate per post by topic family, over a constant neutral and near-black. What makes the grid recognizable is *not* a fixed sequence of colors — it is the `--ink` outline frame, the type, and the slide rhythm (cream rest slide, dark "catch" slide, matching first and last slides), all of which hold while the hues change. See the colorway table in `CLAUDE.md`.
 - **Fixed elements:** @gummietech wordmark, same position every slide; slide-position indicator; source line on the final slide.
 - **Rule:** if a slide has more than 25 words, it is two slides.
 
 Design the template in Figma's free tier if it helps to see it, then translate to HTML/CSS — the HTML file is the production asset, not the Figma file.
 
-*Direction still to be decided — playful/bright vs. dark/technical. Everything else is ready to build once chosen.*
+*Direction chosen: playful/bright. Field hues vary per post to suit the subject; the ink frame and type carry the consistency.*
 
 ---
 
@@ -339,6 +352,7 @@ Hashtags matter far less than they used to — Instagram removed hashtag followi
 
 - **First line = SEO.** Put the actual searchable terms in it: "quantum computing," "fusion reactor," "humanoid robot." Instagram indexes caption text.
 - **3–5 hashtags maximum**, mixed: one broad (#technology), two niche (#quantumcomputing #materialsscience), one branded (#gummietech).
+- **One link, and it is the archive.** `https://kemval.github.io/gummietech/` — newest post first, so the bio link always lands on what was posted today. A custom domain would cost ~$12/year and is the only thing in this plan that would break the $0 constraint; the default URL is fine until it isn't.
 - **Always write alt text.** Accessibility win and a ranking signal. Already in the JSON schema.
 - **End every caption with a question.** Comments are the strongest early-stage signal.
 - **Reply to every comment in the first hour.** Non-negotiable, non-automatable.
@@ -396,7 +410,7 @@ Explicitly **not** a primary metric: likes.
 
 ## 10. Open decisions
 
-- [ ] Brand direction: playful/bright vs. dark/technical
+- [x] Brand direction: playful/bright, with field hues rotating per post by topic (see §5)
 - [ ] Instagram account converted to Professional + linked Facebook Page
 - [ ] Orchestration: GitHub Actions (simpler) vs. n8n on Oracle Cloud (visual editor)
 - [ ] Database: Google Sheets (simpler) vs. Supabase (scales better)

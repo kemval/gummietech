@@ -8,6 +8,7 @@ and screenshots each .slide div individually with Playwright.
 Usage:
     python src/render.py posts/2026-09-03-era.json
     python src/render.py posts/2026-09-03-era.json --outdir output/era
+    python src/render.py posts/2026-09-03-era.json --colorway orbit
 
 Guardrails enforced here, not by convention:
   - refuses to render without `attribution` and `alt_text`
@@ -34,6 +35,23 @@ SLIDE_IDS = ["slide-1", "slide-2", "slide-3", "slide-4", "slide-5"]
 
 REQUIRED = ["hook", "what_happened", "why_it_matters", "the_catch",
             "attribution", "alt_text", "source_url"]
+
+# Field hues by topic family: (lead, support). The five-slide sequence is
+# always lead - cream - support - dark - lead: the hook and CTA bookend the
+# post, slide 2 is the cream rest slide, and the catch always drops to ink.
+# Only the hues vary per post. That is what lets the color suit the subject
+# while the grid still reads as one account.
+#
+# render.py owns these, not the model. draft.py offers the names as a menu
+# and resolves them through here, so an invented name degrades to the
+# default instead of reaching the CSS.
+COLORWAYS: dict[str, tuple[str, str]] = {
+    "signal": ("pink",  "olive"),   # AI, computing, software, robotics
+    "orbit":  ("sky",   "pink"),    # space, astronomy, physics
+    "bloom":  ("olive", "blush"),   # biology, medicine, climate, ecology
+    "ember":  ("amber", "pink"),    # energy, materials, engineering, chemistry
+}
+DEFAULT_COLORWAY = "signal"
 
 WORD_LIMIT = 25          # per §1 of the content system
 HOOK_WORD_LIMIT = 12
@@ -91,18 +109,45 @@ def hook_size_class(hook: str) -> str:
     return "sm"
 
 
-def render_html(post: dict) -> str:
+def slide_fields(name: str | None) -> tuple[str, list[str]]:
+    """
+    Resolve a colorway name to (lead hue, five field class names).
+
+    An unknown name warns and falls back rather than exiting: a wrong hue is
+    cosmetic, unlike a missing attribution, and refusing to render would
+    throw away the Gemini call that produced the draft.
+    """
+    if name not in COLORWAYS:
+        if name:
+            print(f"  warning: unknown colorway {name!r} — using "
+                  f"{DEFAULT_COLORWAY}. Valid: {', '.join(COLORWAYS)}")
+        name = DEFAULT_COLORWAY
+
+    lead, support = COLORWAYS[name]
+    return lead, [lead, "cream", support, "dark", lead]
+
+
+def render_html(post: dict, colorway: str | None = None) -> str:
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
         autoescape=select_autoescape(["html"]),
     )
     template = env.get_template("drop.html")
-    return template.render(
-        **post,
+
+    lead, fields = slide_fields(colorway or post.get("colorway"))
+
+    # Built as a dict rather than splatted as **post: a post JSON carrying a
+    # key that collides with one of the computed values would otherwise raise
+    # "got multiple values for keyword argument".
+    context = dict(post)
+    context.update(
         show_preprint_flag=not post.get("peer_reviewed", False),
         hook_size=hook_size_class(post.get("hook", "")),
         font_dir=(REPO_ROOT / "fonts").as_uri(),
+        lead=lead,
+        fields=fields,
     )
+    return template.render(context)
 
 
 def shoot(html: str, outdir: Path) -> list[Path]:
@@ -143,6 +188,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("post", help="path to the post JSON")
     ap.add_argument("--outdir", default=None, help="where to write PNGs")
+    ap.add_argument("--colorway", default=None, choices=sorted(COLORWAYS),
+                    help="override the colorway in the JSON")
     args = ap.parse_args()
 
     post_path = Path(args.post)
@@ -162,7 +209,7 @@ def main() -> int:
     if not post.get("peer_reviewed"):
         print("  preprint flag ON (peer_reviewed is false)")
 
-    written = shoot(render_html(post), outdir)
+    written = shoot(render_html(post, args.colorway), outdir)
 
     # The caption and alt text are needed at posting time, so drop them
     # next to the images rather than making you dig back into the JSON.

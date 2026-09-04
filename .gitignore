@@ -16,6 +16,9 @@ output/
 # ...but the avatar is source art, not output
 !assets/*.png
 
+# built web archive — rebuilt by src/site.py, deployed from CI
+site/
+
 # editor
 .vscode/
 .DS_Store

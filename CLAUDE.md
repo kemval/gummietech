@@ -63,10 +63,15 @@ src/
   score.py           LLM scoring, batched
   draft.py           winning item → JSON
   render.py          JSON + template → PNGs
+  site.py            published posts → static web archive
 feeds/               *.yaml source lists by tier
+posts/               drafted post JSON
 templates/
+  tokens.css         the locked palette and type stack — included by both
   drop.html          production slide template — 1080x1350
+  site_base.html     web archive shell; index.html and post.html extend it
 output/              rendered PNGs (gitignored)
+site/                built web archive (gitignored)
 docs/                strategy reference
 ```
 
@@ -107,19 +112,55 @@ Slides render at **1080×1350** (4:5). Each slide is a `.slide` div with a
 unique id inside `templates/drop.html`; screenshot each individually with
 Playwright rather than capturing the page.
 
-Design tokens are locked — do not change them or propose alternatives:
+Design tokens are locked — do not change them or propose alternatives.
+They live in `templates/tokens.css`, which both `drop.html` and
+`site_base.html` include, so the slides and the web archive cannot drift
+apart. Do not copy these values into a third place:
 
 ```css
---pink:  #EE6EC0;   /* primary field */
---olive: #B2BC5F;   /* secondary field */
---cream: #F7EFE2;   /* neutral field */
+--pink:  #EE6EC0;   /* field */
+--olive: #B2BC5F;   /* field */
+--cream: #F7EFE2;   /* neutral field, always slide 2 */
 --ink:   #3B2C23;   /* outline + type, not black */
---blush: #F9A8D4;   /* accent, sparing */
+--blush: #F9A8D4;   /* field, sparing */
+--sky:   #7FB2E5;   /* field */
+--amber: #F2B441;   /* field */
 ```
 
 Type: Outfit 800 for display, Figtree 500/700 for body, both Google Fonts.
 Signature element: a 10px `--ink` border, 44px radius, inset 34px from the
 canvas edge, on every slide.
+
+### Colorways
+
+The hues rotate per post; the *rhythm* is what is fixed. Never hardcode a
+field colour in the template — address colour by role (`--field`,
+`--on-field`, `--frame`, `--flag-bg`/`--flag-fg`) and let the modifier class
+set the hue, or the dark slide breaks the moment the palette rotates.
+
+`COLORWAYS` in `src/render.py` is the single source of truth. Each family is
+a `(lead, support)` pair, and every post renders
+`lead · cream · support · dark · lead`:
+
+| family | topics | lead | support |
+|---|---|---|---|
+| `signal` | AI, computing, software, robotics | pink | olive |
+| `orbit` | space, astronomy, physics | sky | pink |
+| `bloom` | biology, medicine, climate, ecology | olive | blush |
+| `ember` | energy, materials, engineering, chemistry | amber | pink |
+
+Invariants that keep the grid recognizable, and that a new family must respect:
+
+- `--ink` is the type, the frame and the dots on every light slide.
+- Slide 2 is always `--cream` — the rest slide.
+- Slide 4 (the catch) always drops to `--ink`; its frame and preprint flag
+  carry the post's lead hue.
+- Slides 1 and 5 share a field — the hook and CTA bookend the post.
+- A new lead or support hue must clear 4.5:1 against `--ink`.
+
+`draft.py` picks the family and `render.py` resolves it, so an invented name
+falls back to `signal` with a warning rather than reaching the CSS.
+`render.py --colorway <name>` overrides the JSON at the human gate.
 
 ## Drafting output contract
 
@@ -128,6 +169,7 @@ canvas edge, on every slide.
 ```json
 {
   "post_type": "drop | breakdown | signal",
+  "colorway": "signal | orbit | bloom | ember",
   "hook": "",
   "what_happened": "",
   "why_it_matters": "",
@@ -146,6 +188,15 @@ canvas edge, on every slide.
 render a record missing either — attribution is a legal and reputational
 requirement, not a nicety.
 
+`colorway` is not required. It is validated against `COLORWAYS` and falls
+back to `signal` with a warning — a colour that does not suit the topic is a
+cosmetic miss, and failing the draft over it would waste the LLM call.
+
+`published_at` is not part of the contract and `draft.py` never emits it. It
+is added by hand, as `YYYY-MM-DD`, when the post actually goes live on
+Instagram, and it is the only thing that lets a post onto the public archive.
+`render.py` ignores it. See **Web archive** below.
+
 When `peer_reviewed` is false, the template must show the
 "Preprint — not yet peer-reviewed" flag. Enforce this in code, not by
 convention.
@@ -159,6 +210,31 @@ convention.
 - Standard library where it suffices; no dependency for twenty lines of code.
 - Comment the non-obvious constraints above wherever they appear in code,
   since they are invisible failure modes otherwise.
+
+## Web archive
+
+`src/site.py` builds `posts/*.json` into a static site — an index plus one
+page per carousel — deployed to GitHub Pages by `.github/workflows/site.yml`
+at <https://kemval.github.io/gummietech/>. That URL is the Instagram bio link.
+
+It exists because Instagram does not make caption URLs clickable. `draft.py`
+records `source_url` and `render.py` writes it into `caption.txt`, but slide 5
+can only print `attribution` as flat text, so without this the source never
+reaches a reader.
+
+Two rules:
+
+- **It is not a blog.** Every page is a pure function of the draft JSON. Do
+  not add a field that requires writing prose per post — that is a second
+  content product, and the time for it does not exist.
+- **`published_at` is the human gate.** `draft.py` writes into `posts/` before
+  approval, so `site.py` skips any post without that date. Do not add a
+  fallback that publishes undated posts. Layer 5 applies to the web too, and a
+  wrong post on a permalink is worse than a wrong post in a feed.
+
+`site.py` skips a malformed post with a warning instead of exiting — the
+opposite of `render.py`, which is right to hard-fail the one post it was asked
+to render. One bad draft must not take the whole site down.
 
 ## Publishing
 

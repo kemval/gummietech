@@ -1,0 +1,31 @@
+/* ============================================================
+   gummietech design tokens — LOCKED.
+
+   The single source of truth for the palette and type stack.
+   Included by templates/drop.html (the 1080x1350 slides) and
+   templates/site_base.html (the web archive), so the carousel
+   and the page it links to cannot drift apart.
+
+   Do not add a hue here without checking it clears 4.5:1
+   against --ink; do not name one of these colours downstream.
+   Slides address colour by ROLE (--field, --on-field, --frame,
+   --flag-bg/--flag-fg) so the dark slide survives a palette
+   rotation. See CLAUDE.md.
+
+   @font-face is NOT here: the slides load the fonts over
+   file:// and the site loads them over http, so each template
+   declares its own faces against these same two families.
+   ============================================================ */
+
+:root {
+  --pink:   #EE6EC0;
+  --olive:  #B2BC5F;
+  --cream:  #F7EFE2;
+  --ink:    #3B2C23;
+  --blush:  #F9A8D4;
+  --sky:    #7FB2E5;
+  --amber:  #F2B441;
+
+  --display: 'Outfit', system-ui, sans-serif;
+  --body:    'Figtree', system-ui, sans-serif;
+}

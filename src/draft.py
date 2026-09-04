@@ -41,7 +41,7 @@ import requests
 
 import gemini
 from ingest import COLUMNS, open_sheet
-from render import HOOK_WORD_LIMIT, WORD_LIMIT
+from render import COLORWAYS, DEFAULT_COLORWAY, HOOK_WORD_LIMIT, WORD_LIMIT
 from verify_feeds import HEADERS, TIMEOUT
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -70,6 +70,11 @@ no prose and no code fences, with exactly these keys:
 {{
   "post_type": "drop",
   "domain": "<2-3 word field label, e.g. AI research, materials, astronomy>",
+  "colorway": "<the palette family whose subject matches this story: signal \
+(AI, computing, software, robotics), orbit (space, astronomy, physics), bloom \
+(biology, medicine, climate, ecology), ember (energy, materials, engineering, \
+chemistry). Use exactly one of those four words. If none clearly fits, use \
+signal>",
   "hook": "<at most {hook_limit} words. The finding, stated plainly. No \
 questions, no 'scientists say', no hype>",
   "what_happened": "<at most {word_limit} words. Who did what, and how it works>",
@@ -167,6 +172,15 @@ def validate(post: dict, url: str) -> dict:
     if any(host in url.lower() for host in PREPRINT_HOSTS):
         post["peer_reviewed"] = False
 
+    # A colour that does not suit the topic is a cosmetic miss, not a
+    # credibility one, so an invented family name falls back instead of
+    # killing a draft that is otherwise fine.
+    if post.get("colorway") not in COLORWAYS:
+        if post.get("colorway"):
+            print(f"  warning: model returned colorway "
+                  f"{post['colorway']!r} — using {DEFAULT_COLORWAY}")
+        post["colorway"] = DEFAULT_COLORWAY
+
     missing = [f for f in REQUIRED if not str(post.get(f, "")).strip()]
     if missing:
         sys.exit(f"Refusing to write. The model left these empty: "
@@ -182,7 +196,7 @@ def validate(post: dict, url: str) -> dict:
         if count > limit:
             print(f"  warning: {field} is {count} words (limit {limit})")
 
-    ordered = ["post_type", "domain", "hook", "what_happened", "why_it_matters",
+    ordered = ["post_type", "domain", "colorway", "hook", "what_happened", "why_it_matters",
                "the_catch", "caption", "keywords", "hashtags", "alt_text",
                "source_url", "code_url", "attribution", "peer_reviewed"]
     return {k: post[k] for k in ordered if k in post}
