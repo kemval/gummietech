@@ -1,0 +1,25 @@
+{
+  "post_type": "drop",
+  "domain": "AI research",
+  "hook": "An AI wrote 40 new methods. All beat the human record.",
+  "what_happened": "Google and Harvard built ERA: a language model paired with tree search that writes scientific code, scores it, and rewrites it thousands of times.",
+  "why_it_matters": "The bottleneck in computational science isn't ideas. It's the months of coding needed to test one. ERA turns that into a search problem.",
+  "the_catch": "ERA only works where 'good' is already a number. Someone has to write the scoring function first — and for most research questions, nobody has.",
+  "caption": "AI code generation just beat human experts at single-cell bioinformatics.",
+  "keywords": [
+    "AI code generation",
+    "machine learning",
+    "bioinformatics"
+  ],
+  "hashtags": [
+    "#technology",
+    "#machinelearning",
+    "#aiagents",
+    "#gummietech"
+  ],
+  "alt_text": "Carousel explaining ERA, an AI system from Google and Harvard that writes scientific software using a language model and tree search, including its limitation that it only works on scorable tasks.",
+  "source_url": "https://www.nature.com/articles/s41586-026-10658-6",
+  "code_url": "github.com/google-research/era",
+  "attribution": "Aygün et al., Nature 654, 909–916 (2026)",
+  "peer_reviewed": true
+}
