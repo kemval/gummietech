@@ -22,46 +22,29 @@ Usage:
 
 Environment (.env locally, repo secrets in CI):
     GEMINI_API_KEY               free-tier key from aistudio.google.com/apikey
-    GEMINI_MODEL                 optional; defaults to DEFAULT_MODEL below
+    GEMINI_MODEL                 optional; see gemini.DEFAULT_MODEL
     GOOGLE_SHEET_ID              spreadsheet key
     GOOGLE_SHEETS_CREDENTIALS    path to the service account JSON
 
-Rate limits shape this file. The free tier allows roughly 10-15 requests
-per minute plus a daily cap that varies by model, and the limits are per
-project rather than per key. So items go up in batches of BATCH_SIZE with
-a sleep between calls, a 429 backs off and retries, and a daily-cap error
-stops the run immediately — backoff cannot fix a spent quota.
+Items go up in batches of BATCH_SIZE with a sleep between calls, to stay
+inside the free tier's per-minute limit. gemini.py owns what happens when
+a request is throttled or the model is overloaded.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
-from pathlib import Path
 
-import requests
-from dotenv import load_dotenv
-
+import gemini
 from ingest import COLUMNS, open_sheet
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
-API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-TIMEOUT = 60
 
 # 15-20 items per request. One request per item would exhaust the daily cap
 # in an afternoon; this keeps a full day's ingest inside 20-30 calls.
 BATCH_SIZE = 18
 SLEEP_BETWEEN_CALLS = 5          # seconds; ~12 requests/minute
-MAX_RETRIES = 4
-
-# Pinned rather than the "gemini-flash-latest" alias, which returns 503 under
-# load often enough to stall a run. Retired models 404 with a clear message,
-# so when this one ages out, set GEMINI_MODEL or bump this line.
-DEFAULT_MODEL = "gemini-3.5-flash"
 
 AXES = ["novelty", "visual", "explain", "surprise"]
 
@@ -103,97 +86,11 @@ def build_items_block(batch: list[dict]) -> str:
     return "\n\n".join(lines)
 
 
-def call_gemini(prompt: str, model: str, api_key: str) -> list[dict]:
-    """
-    One scoring request, with backoff on rate limits.
-
-    Raises SystemExit on a spent daily quota: retrying cannot help, and a
-    silent partial run is worse than a clear stop.
-    """
-    body = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.2,
-            "responseMimeType": "application/json",
-        },
-    }
-
-    delay = 5
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            resp = requests.post(
-                API_URL.format(model=model),
-                headers={"x-goog-api-key": api_key,
-                         "Content-Type": "application/json"},
-                json=body,
-                timeout=TIMEOUT,
-            )
-        except requests.exceptions.Timeout:
-            if attempt == MAX_RETRIES:
-                raise SystemExit(f"Gemini timed out after {TIMEOUT}s, "
-                                 f"{MAX_RETRIES} attempts. Re-run later; "
-                                 "already-scored rows are saved.")
-            time.sleep(delay)
-            delay *= 2
-            continue
-        except requests.exceptions.RequestException as exc:
-            raise SystemExit(f"Could not reach Gemini: {type(exc).__name__}: {exc}")
-
-        if resp.status_code == 429:
-            detail = resp.text.lower()
-            # Per-minute limits recover; a daily cap does not until midnight
-            # Pacific, so stop rather than burn retries against it.
-            if "perday" in detail or "per day" in detail or "daily" in detail:
-                raise SystemExit(
-                    "Gemini daily quota is spent. Scored rows are already "
-                    "written. The quota resets at midnight Pacific — re-run "
-                    "then, or set GEMINI_MODEL to a different free-tier Flash."
-                )
-            if attempt == MAX_RETRIES:
-                raise SystemExit("Gemini kept returning 429 after "
-                                 f"{MAX_RETRIES} attempts. Raise "
-                                 "SLEEP_BETWEEN_CALLS and re-run.")
-            time.sleep(delay)
-            delay *= 2
-            continue
-
-        # 500/503 are Gemini's "try again later" — transient overload on the
-        # shared free-tier capacity, not a problem with the request.
-        if resp.status_code >= 500:
-            if attempt == MAX_RETRIES:
-                raise SystemExit(
-                    f"Gemini returned HTTP {resp.status_code} on every one of "
-                    f"{MAX_RETRIES} attempts — the model is overloaded. Re-run "
-                    "later; scored rows are already saved.")
-            time.sleep(delay)
-            delay *= 2
-            continue
-
-        if resp.status_code == 400 and "API_KEY" in resp.text.upper():
-            raise SystemExit("Gemini rejected the API key. Check GEMINI_API_KEY "
-                             "in .env (or the repo secret in CI).")
-        if resp.status_code == 404:
-            raise SystemExit(f"No such model: {model}. Set GEMINI_MODEL to a "
-                             "model your key can use.")
-        if resp.status_code >= 400:
-            raise SystemExit(f"Gemini returned HTTP {resp.status_code}: "
-                             f"{resp.text[:300]}")
-
-        return parse_scores(resp.json())
-
-    return []
-
-
-def parse_scores(payload: dict) -> list[dict]:
-    """Pull the JSON array out of a generateContent response."""
-    try:
-        text = payload["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError):
-        reason = payload.get("promptFeedback", {}).get("blockReason", "")
-        print(f"  warning: no usable candidate in response {reason}".rstrip())
+def parse_scores(text: str) -> list[dict]:
+    """Pull the JSON array out of the model's reply."""
+    text = (text or "").strip()
+    if not text:
         return []
-
-    text = text.strip()
     if text.startswith("```"):                    # belt and braces: the mime
         text = text.strip("`")                    # type should prevent fences
         text = text.split("\n", 1)[-1] if text.lower().startswith("json") else text
@@ -218,12 +115,7 @@ def main() -> int:
                     help="score and print without writing to the sheet")
     args = ap.parse_args()
 
-    load_dotenv(REPO_ROOT / ".env")
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        sys.exit("GEMINI_API_KEY is not set. Add it to .env (locally) or the "
-                 "repo secrets (CI). Free keys: aistudio.google.com/apikey")
-    model = os.environ.get("GEMINI_MODEL", DEFAULT_MODEL)
+    api_key, model = gemini.config()
 
     worksheet = open_sheet()
     rows = worksheet.get_all_values()             # one read for the whole sheet
@@ -256,8 +148,8 @@ def main() -> int:
         for n, item in enumerate(batch, start=1):
             item["i"] = n                          # numbering is per request
 
-        results = call_gemini(
-            PROMPT.format(items=build_items_block(batch)), model, api_key)
+        results = parse_scores(gemini.generate(
+            PROMPT.format(items=build_items_block(batch)), api_key, model))
         by_index = {int(r["i"]): r for r in results if "i" in r}
 
         updates = []
