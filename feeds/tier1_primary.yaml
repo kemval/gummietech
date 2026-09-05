@@ -26,9 +26,34 @@ feeds:
     url: https://www.nasa.gov/technology/feed/
     topic: tech
 
+  - name: ESA Space News
+    url: https://www.esa.int/rssfeed/Our_Activities/Space_News
+    topic: space
+
+  - name: ESA Space Science
+    url: https://www.esa.int/rssfeed/Our_Activities/Space_Science
+    topic: space
+
   - name: Berkeley Lab
     url: https://newscenter.lbl.gov/feed/
     topic: general
+
+  - name: Berkeley News
+    url: https://news.berkeley.edu/feed/
+    topic: general
+
+  # /about/news/feed is 403; /news/rss redirects to the live one
+  - name: Caltech
+    url: https://www.caltech.edu/news/rss
+    topic: general
+
+  - name: Oak Ridge National Lab
+    url: https://www.ornl.gov/rss.xml
+    topic: engineering
+
+  - name: EPFL
+    url: https://actu.epfl.ch/feeds/rss/mediacom/en/
+    topic: engineering
 
   # was mpg.de/rss/all (404) — English research feed
   - name: Max Planck Society
@@ -40,6 +65,18 @@ feeds:
     url: https://deepmind.google/blog/rss.xml
     topic: ai
 
+  - name: Google Research
+    url: https://research.google/blog/rss/
+    topic: ai
+
+  - name: OpenAI
+    url: https://openai.com/news/rss.xml
+    topic: ai
+
+  - name: Microsoft Research
+    url: https://www.microsoft.com/en-us/research/feed/
+    topic: ai
+
   - name: Hugging Face Blog
     url: https://huggingface.co/blog/feed.xml
     topic: ai
@@ -48,14 +85,62 @@ feeds:
     url: https://developer.nvidia.com/blog/feed/
     topic: ai
 
+  - name: NVIDIA Newsroom
+    url: https://nvidianews.nvidia.com/releases.xml
+    topic: tech
+
+  - name: Waymo
+    url: https://waymo.com/blog/rss.xml
+    topic: robotics
+
+  - name: Cloudflare Blog
+    url: https://blog.cloudflare.com/rss/
+    topic: tech
+
   # --- journals / science press ---
   - name: Nature News
     url: https://www.nature.com/nature.rss
     topic: general
 
+  - name: Nature Astronomy
+    url: https://www.nature.com/natastron.rss
+    topic: space
+
+  - name: Nature Materials
+    url: https://www.nature.com/nmat.rss
+    topic: materials
+
+  - name: Science News (AAAS)
+    url: https://www.science.org/rss/news_current.xml
+    topic: general
+
+  - name: PNAS
+    url: https://www.pnas.org/rss/current.xml
+    topic: general
+
+  - name: Cell Press
+    url: https://www.cell.com/cell/current.rss
+    topic: biology
+
+  - name: PLOS Biology
+    url: https://journals.plos.org/plosbiology/feed/atom
+    topic: biology
+
   - name: Quanta Magazine
     url: https://api.quantamagazine.org/feed/
     topic: general
+
+  - name: Science News magazine
+    url: https://www.sciencenews.org/feed
+    topic: general
+
+  - name: Scientific American
+    url: http://rss.sciam.com/ScientificAmerican-Global
+    topic: general
+
+  - name: Physics World
+    url: https://physicsworld.com/feed/
+    topic: physics
 
   - name: Science Daily - Top Tech
     url: https://www.sciencedaily.com/rss/top/technology.xml
@@ -65,6 +150,10 @@ feeds:
     url: https://spectrum.ieee.org/feeds/feed.rss
     topic: engineering
 
+  - name: MIT Technology Review
+    url: https://www.technologyreview.com/feed/
+    topic: tech
+
   - name: Ars Technica
     url: https://feeds.arstechnica.com/arstechnica/index
     topic: tech
@@ -73,9 +162,24 @@ feeds:
     url: https://phys.org/rss-feed/
     topic: general
 
-  # --- physics: CERN replacements, UNVERIFIED ---
-  # home.cern/api/news/news/feed.rss now 404s. These are candidates —
-  # keep whichever passes, delete the rest.
+  - name: Space.com
+    url: https://www.space.com/feeds/all
+    topic: space
+
+  - name: New Atlas
+    url: https://newatlas.com/index.rss
+    topic: engineering
+
+  - name: Hackaday
+    url: https://hackaday.com/blog/feed/
+    topic: engineering
+
+  # --- physics ---
+  # home.cern/api/news/news/feed.rss 404s; home.cern/feed is the live one.
+  - name: CERN
+    url: https://home.cern/feed
+    topic: physics
+
   - name: CERN Courier
     url: https://cerncourier.com/feed/
     topic: physics

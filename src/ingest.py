@@ -63,11 +63,18 @@ SUMMARY_CHARS = 500
 
 # Substring match against title + summary, lowercased. Funding rounds and
 # partnership announcements are business news, not science or engineering.
+#
+# The second group is recurring filler from the general-interest science
+# press: daily photo posts, anniversary columns, and affiliate commerce.
+# These are structural, not topical — a title matching one of them is
+# never a story, so dropping them here costs nothing and keeps a
+# predictable ~15 rows a week out of the day's scoring budget.
 DROP_PATTERNS = [
     "raises $", "series a", "series b", "series c", "seed round",
     "announces partnership", "partners with", "acquires", "acquisition of",
     "appoints", "names new ceo", "quarterly results", "earnings",
     "webinar", "sponsored", "press release",
+    "photo of the day", "on this day in space", "best deals", "% off",
 ]
 
 TAG_RE = re.compile(r"<[^>]+>")

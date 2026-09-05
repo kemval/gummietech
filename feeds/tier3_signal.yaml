@@ -1,0 +1,19 @@
+# Tier 3 — community signal (where things go viral first)
+#
+# Not primary sources. These say what people are already reacting to,
+# which is the early-warning layer Tier 1 cannot give.
+#
+# Re-verify after editing:  python src/verify_feeds.py -v
+#
+# Dead ends, so they are not retried:
+#   - reddit.com/r/<sub>/.rss returns 403 to the browser UA in
+#     verify_feeds.HEADERS. It needs an OAuth app, not a feed.
+#   - GitHub Trending has no official feed at all.
+
+feeds:
+  # hnrss.org is a free third-party bridge over the HN API. The points
+  # threshold is the whole point: unfiltered HN would flood the sheet
+  # and burn the day's Gemini scoring quota on noise.
+  - name: Hacker News 200+
+    url: https://hnrss.org/frontpage?points=200
+    topic: tech
