@@ -57,6 +57,15 @@ WORD_LIMIT = 25          # per §1 of the content system
 HOOK_WORD_LIMIT = 12
 
 
+def shown(path: Path) -> str:
+    """Repo-relative for readability, absolute when --outdir points outside
+    the repo — relative_to() raises rather than escaping with `..`."""
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def load_post(path: Path) -> dict:
     """Read and validate a post record."""
     try:
@@ -178,7 +187,7 @@ def shoot(html: str, outdir: Path) -> list[Path]:
             out = outdir / f"slide-{i}.png"
             el.screenshot(path=str(out))
             written.append(out)
-            print(f"  wrote {out.relative_to(REPO_ROOT)}")
+            print(f"  wrote {shown(out)}")
 
         browser.close()
     return written
@@ -223,7 +232,7 @@ def main() -> int:
         + f"\n--- ALT TEXT ---\n{post['alt_text']}\n\n"
         f"--- ATTRIBUTION ---\n{post['attribution']}\n{post['source_url']}\n"
     )
-    print(f"  wrote {sidecar.relative_to(REPO_ROOT)}")
+    print(f"  wrote {shown(sidecar)}")
     print(f"\nDone. {len(written)} slides.")
     return 0
 
