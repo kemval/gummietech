@@ -65,8 +65,8 @@ Five items, one slide each, ranked. Highest save rate of the three formats becau
 Seven layers. Build in order. Do not attempt the whole thing at once.
 
 ```
-[1] INGEST → [2] SCORE → [3] DRAFT → [4] DESIGN → [5] HUMAN GATE → [6] PUBLISH → [7] LEARN
-  every 2h    free LLM     LLM        HTML→PNG      10 min/day     Business Suite   weekly
+[1] INGEST → [2] SCORE → [3] DRAFT → [3b] FACT-CHECK → [4] DESIGN → [5] HUMAN GATE → [6] PUBLISH → [7] LEARN
+  every 2h    free LLM     LLM        against source    HTML→PNG      10 min/day     Business Suite   weekly
 ```
 
 ### Layer 1 — Ingest (every 2 hours)
@@ -114,6 +114,18 @@ JSON output is the key architectural move — it plugs straight into the design 
 
 Split the work by stakes: free-tier LLM for routine Drops, this Claude project for Breakdowns and anything where the explanation has to be excellent.
 
+### Layer 3b — Fact-check (before it costs a render)
+
+Layer 3 is an LLM reading a fetched article, and when that fetch is blocked or thin it drafts from the feed summary instead. What comes back is fluent, plausible and sometimes wrong: a number that is not in the paper, a limitation nobody stated, a citation crediting the press office instead of the authors. None of that is visible in the JSON. Only the source settles it.
+
+`.claude/agents/fact-check.md` defines a read-only agent that re-fetches `source_url`, finds the underlying paper behind the news coverage, and checks each slide claim against it — every number and name must appear in the source, `the_catch` must be a limitation the source itself states, the hedges ("suggests", "in mice", "in simulation") must survive onto the slide, and `attribution` must name the paper's first author rather than the university that wrote the release. It returns BLOCK / FIX / PASS per claim with the quoted sentence, and a source it cannot read is UNVERIFIED — a hold, not a pass.
+
+It reports; it never edits the JSON, renders, or dates a post. That keeps §7.1 intact: this layer makes the gate cheaper to run, it does not stand in for it.
+
+Deterministic checks stay in code, where they already are — `draft.py` and `render.py` hard-fail on missing `attribution` or `alt_text`, on a non-boolean `peer_reviewed`, and on a preprint host claiming peer review. The agent exists for the one question code cannot answer: *does the source actually say this.* One case is worth calling out because the host check structurally cannot see it — coverage on a journal or news domain reporting work that is itself a preprint.
+
+Run it before Layer 4 rather than after. A render that has to be thrown away costs Playwright time and a Business Suite upload; a caught claim costs nothing.
+
 ### Layer 4 — Design (automated rendering)
 
 **HTML/CSS template rendered to PNG via Playwright.** Free, headless, perfect typography, infinitely customizable, and it produces better output than the template tools anyway.
@@ -126,7 +138,7 @@ Output: 1080×1350 PNG per slide.
 
 ### Layer 5 — Human gate (DO NOT SKIP)
 
-A 10-minute morning review in the sheet: approve / edit / kill. Approve flips status to `approved`.
+A 10-minute morning review in the sheet: approve / edit / kill. Approve flips status to `approved`. Read the Layer 3b report alongside the slides — it tells you which claims were verified against the source and which were not, so the ten minutes go to judgement rather than to re-reading the paper.
 
 A fully autonomous science account will eventually post something wrong or embarrassing. In this niche that is unrecoverable. The gate stays.
 
@@ -366,7 +378,7 @@ These override efficiency, always.
 1. **The human approval gate stays.** No post publishes without a person reading it.
 2. **Preprints get labeled on-slide:** "Preprint — not yet peer-reviewed." A finding that fails to replicate after being posted as fact costs the credibility the whole account depends on. The transparency itself becomes a reason people trust @gummietech over pages that skip it.
 3. **Attribution is a required field.** Turning someone's 3,000-word Substack essay into a carousel without credit is an IP problem and a fast way to make enemies in exactly the community whose support matters most. Use sources for the *idea and the understanding*; write every slide in original words; put "via @author" on the final slide and a link in the caption. Tag them — writers routinely reshare posts that credit them well, which is free reach from an audience that already cares.
-4. **No fabricated numbers, dates, quotes, or study details.** If it isn't in the source, it doesn't go on the slide.
+4. **No fabricated numbers, dates, quotes, or study details.** If it isn't in the source, it doesn't go on the slide. Layer 3b checks this claim by claim against the fetched source; a claim it could not verify is held, not published.
 5. **Never claim certainty the source doesn't have.** "Suggests," "early results indicate," "in mice" — keep the hedges the researchers used.
 6. **Distinguish demo from product.** A lab demo is not a shipping capability.
 7. **Free does not mean unverified.** A tool being on the free stack is not a guarantee it still is — check current terms before building a dependency on any free tier, and prefer open-source or first-party tools, which are least likely to change under you.
