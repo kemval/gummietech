@@ -15,8 +15,8 @@ feeds, scores items with an LLM, drafts post copy as JSON, renders that
 JSON to PNG slides, and queues them for human approval.
 
 ```
-[1] INGEST → [2] SCORE → [3] DRAFT → [4] RENDER → [5] HUMAN GATE → [6] PUBLISH
-  every 2h    Gemini      LLM         HTML→PNG     manual          Business Suite
+[1] INGEST → [2] SCORE → [3] DRAFT → [3b] FACT-CHECK → [4] RENDER → [5] HUMAN GATE → [6] PUBLISH
+  every 2h    Gemini      LLM         against source    HTML→PNG     manual          Business Suite
 ```
 
 Layer 5 is manual and permanent. Do not propose removing it or building
@@ -56,6 +56,7 @@ Gemini or Groq free tiers — never point `ingest.py` or `score.py` at a paid AP
 ## Layout
 
 ```
+.claude/agents/      fact-check.md — verifies a draft against its source
 .github/workflows/   GitHub Actions cron
 src/
   verify_feeds.py    checks every feed URL is live
@@ -161,6 +162,31 @@ Invariants that keep the grid recognizable, and that a new family must respect:
 `draft.py` picks the family and `render.py` resolves it, so an invented name
 falls back to `signal` with a warning rather than reaching the CSS.
 `render.py --colorway <name>` overrides the JSON at the human gate.
+
+## Fact-checking a draft
+
+`draft.py` drafts from the feed summary when the publisher blocks the article
+fetch, and the model then writes fluent, plausible, wrong slides. Run the
+`fact-check` agent (`.claude/agents/fact-check.md`) on a post before rendering
+it — it re-fetches `source_url`, finds the paper behind the news coverage, and
+checks each slide claim against it, reporting BLOCK / FIX / PASS with the
+supporting sentence.
+
+It is read-only by design: it reports, and a person applies the edits. Do not
+give it Edit or Write, and do not let it add `published_at`. Layer 5 is the
+point.
+
+Two failure modes it exists to catch, because nothing in code can:
+
+- **Citing the wrong author.** News coverage quotes whoever gave the
+  interview, who is usually the senior (last) author. `attribution` must name
+  the paper's first author. Confirm the order against Crossref
+  (`api.crossref.org/works/<doi>`) rather than the article's prose.
+- **A preprint behind a journal URL.** The `PREPRINT_HOSTS` check in
+  `draft.py` sees only the host, so coverage on a news domain reporting
+  preprint work passes it while being wrong.
+
+A source that cannot be read is a hold, not a pass.
 
 ## Drafting output contract
 
