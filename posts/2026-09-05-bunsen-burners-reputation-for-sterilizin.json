@@ -1,0 +1,25 @@
+{
+  "post_type": "drop",
+  "domain": "microbiology",
+  "colorway": "bloom",
+  "hook": "Bunsen burners do not sterilize lab workspaces and can worsen contamination.",
+  "what_happened": "Researchers tested Bunsen burners by contaminating lab air with bacteria and measuring how many microbes settled near active versus inactive burners.",
+  "why_it_matters": "This challenges the long-held assumption that Bunsen burner convection currents carry microbe-containing particles away from workbenches.",
+  "the_catch": "Only one extreme experiment with massive bacteria levels showed fewer bacteria settling near the active burner.",
+  "caption": "A new study reveals that laboratory Bunsen burners fail to effectively decontaminate workspaces and may even increase bacterial contamination.",
+  "keywords": [
+    "Bunsen burner",
+    "microbiology",
+    "contamination"
+  ],
+  "hashtags": [
+    "#science",
+    "#microbiology",
+    "#laboratory",
+    "#gummietech"
+  ],
+  "alt_text": "A five-slide carousel explaining a study that found Bunsen burners do not decontaminate lab workspaces and can increase bacterial contamination, except when airborne contamination is extremely high.",
+  "source_url": "https://www.nature.com/articles/d41586-026-02758-0",
+  "attribution": "DeVincent et al., Microbiol. Spectr. (2026)",
+  "peer_reviewed": true
+}
